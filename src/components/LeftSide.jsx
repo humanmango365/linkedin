@@ -1,14 +1,15 @@
 import React from 'react'
+import { connect } from 'react-redux'
 import styled from 'styled-components'
 
-const LeftSide = () => {
+const LeftSide = ({user}) => {
   return (
     <Container>
-      <ArtCard>
 
+      <ArtCard>
         <Photo>
           <div><img src="/images/photo.svg" alt="" /></div>
-          <h2>Hello there</h2>
+          <h2>Hello, {user ? user.displayName : 'There'}</h2>
           <a>Add a photo</a>
         </Photo>
 
@@ -26,8 +27,8 @@ const LeftSide = () => {
           <img src="/images/item-icon.svg" alt="" />
           My Items
         </Items>
-        
       </ArtCard>
+
       <SubCard>
         <Group>
           <div>
@@ -39,6 +40,7 @@ const LeftSide = () => {
         </Group>
         <p>Discover more</p>
       </SubCard>
+      
     </Container>
   )
 }
@@ -81,6 +83,7 @@ const Photo = styled.div`
   h2 {
     font-weight: 600;
     font-size: 24px;
+    text-align: center;
   }
 
   a {
@@ -187,4 +190,8 @@ const Group = styled.div`
 
 `
 
-export default LeftSide
+const mapStateToProps = state => ({
+  user: state.userState.user
+})
+
+export default connect(mapStateToProps)(LeftSide)

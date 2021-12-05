@@ -1,13 +1,36 @@
-import React from 'react'
+import React, { useState, useEffect } from 'react'
+import Loader from 'react-loader-spinner'
 import styled from 'styled-components'
+import PostModal from './PostModal'
+import { connect } from 'react-redux'
+import { setLoading, getArticlesAPI } from '../app/actions/index'
+import ReactPlayer from 'react-player'
 
-const Main = () => {
+const Main = ({loading, user, isLoading, getArticles, articles}) => {
+  
+  const [showModal, setShowModal] = useState(false)
+
+  useEffect(() => {
+    getArticles()
+  }, [])
+
+  const handleShowModal = (e) => {
+    setShowModal(true)
+  }
+
+  const handleCloseModal = (e) => {
+    setShowModal(false)
+  }
+
   return (
     <Container>
       <ShareBox>
         <div>
           <img src="/images/user.svg" alt="" />
-          <button>Start a post</button>
+          <button
+            onClick={handleShowModal}
+            disabled={loading ? true : false}
+          >Start a post</button>
         </div>
 
         <GroupButton>
@@ -32,17 +55,26 @@ const Main = () => {
           </button>
         </GroupButton>
       </ShareBox>
-      
-      <div>
-        <Article>
 
+      {articles.length ? <Content>
+        {
+          loading && <Loader
+            type="Oval"
+            color="#0a66c2"
+            height={50}
+            width={50}
+            timeout={0}
+          />
+        }
+
+        {articles.map((article) => (<Article key={article.actor.date.seconds}>
           <SharedActor>
             <a href="">
-              <img src="/images/user.svg" alt="" />
+              <img src={article.actor.image} alt="" />
               <div>
-                <span>Title</span>
-                <span>Info</span>
-                <span>Date</span>
+                <span>{article.actor.title}</span>
+                <span>{article.actor.description}</span>
+                <span>{article.actor.date.toDate().toLocaleDateString()}</span>
               </div>
             </a>
             <button>
@@ -51,12 +83,15 @@ const Main = () => {
           </SharedActor>
 
           <Description>
-            Description
+            {article.description}
           </Description>
 
           <SharedImg>
             <a href="">
-              <img src="/images/shared-image.png" alt="" />
+              {
+                !article.sharedImage && article.video ? <ReactPlayer width={'100%'} url={article.video} />
+                : article.sharedImage && <img src={article.sharedImage} alt="" /> 
+              }
             </a>
           </SharedImg>
 
@@ -70,7 +105,7 @@ const Main = () => {
             </li>
 
             <li>
-              <a href="">2 comments</a>
+              <a href="">{article.comments} comments</a>
             </li>
           </SocialCounts>
 
@@ -92,10 +127,15 @@ const Main = () => {
               <span>Send</span>
             </button>
           </SocialButtons>
+        </Article>)
+        )}
         
-        </Article>
-      </div>
+      </Content> : <p style={{textAlign: 'center', marginTop: '20px'}}>No Articles</p>}
+
+
+      {showModal && <PostModal handleCloseModal={handleCloseModal} />}
     </Container>
+   
   )
 }
 
@@ -130,6 +170,7 @@ const ShareBox = styled(CommonCard)`
     &:first-child {
       display: flex;
       align-items: center;
+      justify-content: space-between;
       padding: 8px 16px 0px 16px;
       img {
         width: 48px;
@@ -138,10 +179,9 @@ const ShareBox = styled(CommonCard)`
       }
       button {
         margin: 4px 0;
-        flex-grow: 1;
         color: rgb(0 0 0 / 60%);
         font-weight: 600;
-        padding: 12px 16px;
+        padding: 12px 46px;
         border-radius: 35px;
         text-align: left;
         border: 1px solid rgba(0, 0, 0, .15);
@@ -189,6 +229,7 @@ const Article = styled(CommonCard)`
   margin: 0 0 8px;
   padding: 0;
   overflow: visible;
+  width: 100%;
 `
 
 const SharedActor = styled.div`
@@ -207,6 +248,7 @@ const SharedActor = styled.div`
     img {
       width: 48px;
       height: 48px;
+      border-radius: 50%;
     }
 
     & > div {
@@ -278,6 +320,7 @@ const SocialCounts = styled.ul`
 const SocialButtons = styled.div`
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   padding: 8px;
   button {
     color: rgba(10, 102, 194, .6);
@@ -287,6 +330,7 @@ const SocialButtons = styled.div`
       border-radius: 5px;
       padding: 6px 10px;
       display: inline-flex;
+      flex: 1 1 auto;
       align-items: center;
       column-gap: 6px;
       font-weight: 600;
@@ -297,4 +341,24 @@ const SocialButtons = styled.div`
   }
 `
 
-export default Main
+const Content = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+`
+
+
+const mapStateToProps = state => ({
+  loading: state.articleState.loading,
+  user: state.userState.user,
+  articles: state.articleState.articles
+})
+
+const mapDispatchToProps = dispatch => ({
+  getArticles: () => {
+    dispatch(getArticlesAPI())
+  }
+})
+
+
+export default connect(mapStateToProps, mapDispatchToProps)(Main)
